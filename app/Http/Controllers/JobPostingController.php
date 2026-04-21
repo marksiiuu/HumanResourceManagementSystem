@@ -12,19 +12,27 @@ class JobPostingController extends Controller
 {
     public function index(Request $request)
     {
-        $query = JobPosting::with(['department','creator','applications'])
-            ->whereNull('archived_at');
+        $showArchived = $request->has('archived');
+        
+        $query = JobPosting::with(['department','creator','applications']);
 
-        if ($request->status)      $query->where('status',$request->status);
+        if ($showArchived) {
+            $query->whereNotNull('archived_at');
+        } else {
+            $query->whereNull('archived_at');
+        }
+
+        if ($request->status)        $query->where('status',$request->status);
         if ($request->department_id) $query->where('department_id',$request->department_id);
         if ($request->search) {
             $query->where('title','like',"%{$request->search}%");
         }
 
-        $postings    = $query->latest()->paginate(15)->withQueryString();
-        $departments = Department::whereNull('archived_at')->get();
+        $postings      = $query->latest()->paginate(15)->withQueryString();
+        $departments   = Department::whereNull('archived_at')->get();
+        $archivedCount = JobPosting::whereNotNull('archived_at')->count();
 
-        return view('recruitment.index', compact('postings','departments'));
+        return view('recruitment.index', compact('postings','departments', 'showArchived', 'archivedCount'));
     }
 
     public function create()

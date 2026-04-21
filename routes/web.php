@@ -112,6 +112,7 @@ Route::middleware(['auth','checkRole'])->group(function () {
         Route::put('payroll/{payroll}',         [PayrollController::class,'update'])->name('payroll.update');
         Route::delete('payroll/{payroll}',      [PayrollController::class,'destroy'])->name('payroll.destroy');
         Route::post('payroll/generate-bulk',    [PayrollController::class,'generateBulk'])->name('payroll.generate-bulk');
+        Route::get('payroll/check-bulk',        [PayrollController::class,'checkBulk'])->name('payroll.check-bulk');
     });
 
     Route::get('payroll/{payroll}', [PayrollController::class,'show'])->name('payroll.show');

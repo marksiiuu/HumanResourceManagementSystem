@@ -45,9 +45,20 @@
                 <button type="submit" class="btn btn-primary btn-sm">Filter</button>
                 <a href="<?php echo e(route('attendance.index')); ?>" class="btn btn-outline-secondary btn-sm ms-1">Reset</a>
             </div>
+            <div class="col-auto ms-auto">
+                <?php if($showArchived): ?>
+                    <a href="<?php echo e(route('attendance.index')); ?>" class="btn btn-outline-secondary btn-sm"><i class="bi bi-calendar-check me-1"></i>Show Active</a>
+                <?php else: ?>
+                    <a href="<?php echo e(route('attendance.index')); ?>?archived=1" class="btn btn-outline-warning btn-sm"><i class="bi bi-archive me-1"></i>Archived (<?php echo e($archivedCount); ?>)</a>
+                <?php endif; ?>
+            </div>
         </form>
     </div>
 </div>
+
+<?php if($showArchived): ?>
+<div class="alert alert-warning mb-3"><i class="bi bi-archive me-2"></i>Showing <strong>archived attendance records</strong>. These records are hidden from standard reports.</div>
+<?php endif; ?>
 
 <div class="card">
     <div class="card-header d-flex align-items-center justify-content-between">
@@ -93,17 +104,17 @@
                     <td class="text-end">
                         <div class="btn-group btn-group-sm">
                             <a href="<?php echo e(route('attendance.edit',$att)); ?>" class="btn btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
-                            <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#delAtt<?php echo e($att->id); ?>"><i class="bi bi-trash"></i></button>
+                            <button class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#delAtt<?php echo e($att->id); ?>" title="Archive"><i class="bi bi-archive"></i></button>
                         </div>
                         <div class="modal fade" id="delAtt<?php echo e($att->id); ?>" tabindex="-1">
                             <div class="modal-dialog modal-sm"><div class="modal-content">
-                                <div class="modal-header"><h6 class="modal-title">Delete Record</h6><button class="btn-close" data-bs-dismiss="modal"></button></div>
-                                <div class="modal-body small">Delete attendance for <strong><?php echo e($att->employee->full_name); ?></strong> on <?php echo e($att->date->format('M d, Y')); ?>?</div>
+                                <div class="modal-header"><h6 class="modal-title">Archive Record</h6><button class="btn-close" data-bs-dismiss="modal"></button></div>
+                                <div class="modal-body small">Archive attendance for <strong><?php echo e($att->employee->full_name); ?></strong> on <?php echo e($att->date->format('M d, Y')); ?>?</div>
                                 <div class="modal-footer">
                                     <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
                                     <form method="POST" action="<?php echo e(route('attendance.destroy',$att)); ?>">
                                         <?php echo csrf_field(); ?> <?php echo method_field('DELETE'); ?>
-                                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                        <button type="submit" class="btn btn-sm btn-warning">Archive</button>
                                     </form>
                                 </div>
                             </div></div>
@@ -113,7 +124,7 @@
                 </tr>
                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                 <tr><td colspan="8" class="text-center text-muted py-4">
-                    <i class="bi bi-clock display-6 d-block mb-2"></i>No attendance records found.
+                    <i class="bi bi-clock display-6 d-block mb-2"></i>No <?php echo e($showArchived ? 'archived' : ''); ?> attendance records found.
                 </td></tr>
                 <?php endif; ?>
             </tbody>

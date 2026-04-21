@@ -46,9 +46,20 @@
                 <button type="submit" class="btn btn-primary btn-sm">Filter</button>
                 <a href="{{ route('attendance.index') }}" class="btn btn-outline-secondary btn-sm ms-1">Reset</a>
             </div>
+            <div class="col-auto ms-auto">
+                @if($showArchived)
+                    <a href="{{ route('attendance.index') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-calendar-check me-1"></i>Show Active</a>
+                @else
+                    <a href="{{ route('attendance.index') }}?archived=1" class="btn btn-outline-warning btn-sm"><i class="bi bi-archive me-1"></i>Archived ({{ $archivedCount }})</a>
+                @endif
+            </div>
         </form>
     </div>
 </div>
+
+@if($showArchived)
+<div class="alert alert-warning mb-3"><i class="bi bi-archive me-2"></i>Showing <strong>archived attendance records</strong>. These records are hidden from standard reports.</div>
+@endif
 
 <div class="card">
     <div class="card-header d-flex align-items-center justify-content-between">
@@ -94,17 +105,17 @@
                     <td class="text-end">
                         <div class="btn-group btn-group-sm">
                             <a href="{{ route('attendance.edit',$att) }}" class="btn btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
-                            <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#delAtt{{ $att->id }}"><i class="bi bi-trash"></i></button>
+                            <button class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#delAtt{{ $att->id }}" title="Archive"><i class="bi bi-archive"></i></button>
                         </div>
                         <div class="modal fade" id="delAtt{{ $att->id }}" tabindex="-1">
                             <div class="modal-dialog modal-sm"><div class="modal-content">
-                                <div class="modal-header"><h6 class="modal-title">Delete Record</h6><button class="btn-close" data-bs-dismiss="modal"></button></div>
-                                <div class="modal-body small">Delete attendance for <strong>{{ $att->employee->full_name }}</strong> on {{ $att->date->format('M d, Y') }}?</div>
+                                <div class="modal-header"><h6 class="modal-title">Archive Record</h6><button class="btn-close" data-bs-dismiss="modal"></button></div>
+                                <div class="modal-body small">Archive attendance for <strong>{{ $att->employee->full_name }}</strong> on {{ $att->date->format('M d, Y') }}?</div>
                                 <div class="modal-footer">
                                     <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
                                     <form method="POST" action="{{ route('attendance.destroy',$att) }}">
                                         @csrf @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                        <button type="submit" class="btn btn-sm btn-warning">Archive</button>
                                     </form>
                                 </div>
                             </div></div>
@@ -114,7 +125,7 @@
                 </tr>
                 @empty
                 <tr><td colspan="8" class="text-center text-muted py-4">
-                    <i class="bi bi-clock display-6 d-block mb-2"></i>No attendance records found.
+                    <i class="bi bi-clock display-6 d-block mb-2"></i>No {{ $showArchived ? 'archived' : '' }} attendance records found.
                 </td></tr>
                 @endforelse
             </tbody>

@@ -11,16 +11,25 @@ class AttendanceController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Attendance::active()->with('employee.department');
+        $showArchived = $request->has('archived');
+        $query        = Attendance::query()->with('employee.department');
+
+        if ($showArchived) {
+            $query->whereNotNull('archived_at');
+        } else {
+            $query->active();
+        }
+
         if ($request->date)        $query->whereDate('date',$request->date);
         if ($request->employee_id) $query->where('employee_id',$request->employee_id);
         if ($request->status)      $query->where('status',$request->status);
         if ($request->month)       $query->whereRaw("DATE_FORMAT(date,'%Y-%m') = ?"  ,[$request->month]);
 
-        $attendances = $query->latest('date')->paginate(20)->withQueryString();
-        $employees   = Employee::whereNull('archived_at')->where('status','active')->get();
+        $attendances   = $query->latest('date')->paginate(20)->withQueryString();
+        $employees     = Employee::whereNull('archived_at')->where('status','active')->get();
+        $archivedCount = Attendance::whereNotNull('archived_at')->count();
 
-        return view('attendance.index', compact('attendances','employees'));
+        return view('attendance.index', compact('attendances','employees', 'showArchived', 'archivedCount'));
     }
 
     public function create()

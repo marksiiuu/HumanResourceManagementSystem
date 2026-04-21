@@ -58,9 +58,20 @@
                 <button type="submit" class="btn btn-primary btn-sm">Filter</button>
                 <a href="<?php echo e(route('payroll.index')); ?>" class="btn btn-outline-secondary btn-sm ms-1">Reset</a>
             </div>
+            <div class="col-auto ms-auto">
+                <?php if($showArchived): ?>
+                    <a href="<?php echo e(route('payroll.index')); ?>" class="btn btn-outline-secondary btn-sm"><i class="bi bi-cash-stack me-1"></i>Show Active</a>
+                <?php else: ?>
+                    <a href="<?php echo e(route('payroll.index')); ?>?archived=1" class="btn btn-outline-warning btn-sm"><i class="bi bi-archive me-1"></i>Archived (<?php echo e($archivedCount); ?>)</a>
+                <?php endif; ?>
+            </div>
         </form>
     </div>
 </div>
+
+<?php if($showArchived): ?>
+<div class="alert alert-warning mb-3"><i class="bi bi-archive me-2"></i>Showing <strong>archived payroll records</strong>. These records are hidden from financial reports.</div>
+<?php endif; ?>
 
 <div class="card">
     <div class="card-header d-flex align-items-center justify-content-between">
@@ -118,17 +129,17 @@
                             <a href="<?php echo e(route('payroll.show',$pay)); ?>" class="btn btn-outline-secondary" title="View Payslip"><i class="bi bi-receipt"></i></a>
                             <?php if($pay->status !== 'paid'): ?>
                             <a href="<?php echo e(route('payroll.edit',$pay)); ?>" class="btn btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
-                            <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#delPay<?php echo e($pay->id); ?>" title="Delete"><i class="bi bi-trash"></i></button>
+                            <button class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#delPay<?php echo e($pay->id); ?>" title="Archive"><i class="bi bi-archive"></i></button>
                             <?php endif; ?>
                         </div>
-                        <!-- Delete Modal -->
+                        <!-- Archive Modal -->
                         <div class="modal fade" id="delPay<?php echo e($pay->id); ?>" tabindex="-1">
                             <div class="modal-dialog modal-sm"><div class="modal-content">
-                                <div class="modal-header"><h6 class="modal-title">Delete Payroll</h6><button class="btn-close" data-bs-dismiss="modal"></button></div>
-                                <div class="modal-body small">Delete payroll for <strong><?php echo e($pay->employee->full_name); ?></strong> (<?php echo e($pay->month_name); ?> <?php echo e($pay->year); ?>)?</div>
+                                <div class="modal-header"><h6 class="modal-title">Archive Payroll</h6><button class="btn-close" data-bs-dismiss="modal"></button></div>
+                                <div class="modal-body small">Archive payroll for <strong><?php echo e($pay->employee->full_name); ?></strong> (<?php echo e($pay->month_name); ?> <?php echo e($pay->year); ?>)?</div>
                                 <div class="modal-footer">
                                     <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                    <form method="POST" action="<?php echo e(route('payroll.destroy',$pay)); ?>"><?php echo csrf_field(); ?> <?php echo method_field('DELETE'); ?><button type="submit" class="btn btn-sm btn-danger">Delete</button></form>
+                                    <form method="POST" action="<?php echo e(route('payroll.destroy',$pay)); ?>"><?php echo csrf_field(); ?> <?php echo method_field('DELETE'); ?><button type="submit" class="btn btn-sm btn-warning">Archive</button></form>
                                 </div>
                             </div></div>
                         </div>
@@ -136,7 +147,7 @@
                 </tr>
                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                 <tr><td colspan="9" class="text-center text-muted py-4">
-                    <i class="bi bi-cash display-6 d-block mb-2"></i>No payroll records found.
+                    <i class="bi bi-cash display-6 d-block mb-2"></i>No <?php echo e($showArchived ? 'archived' : ''); ?> payroll records found.
                 </td></tr>
                 <?php endif; ?>
             </tbody>

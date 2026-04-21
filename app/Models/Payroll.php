@@ -14,7 +14,7 @@ class Payroll extends Model
         'allowances','gross_salary','tax_deduction','sss_deduction',
         'philhealth_deduction','pagibig_deduction','other_deductions',
         'total_deductions','net_salary','days_worked','days_absent',
-        'status','pay_date','notes','processed_by'
+        'status','pay_date','notes','processed_by', 'archived_at'
     ];
 
     protected $casts = [
@@ -25,7 +25,13 @@ class Payroll extends Model
         'philhealth_deduction'=>'decimal:2','pagibig_deduction'=>'decimal:2',
         'other_deductions'=>'decimal:2','total_deductions'=>'decimal:2',
         'net_salary'=>'decimal:2',
+        'archived_at'=>'datetime',
     ];
+
+    public function scopeActive($query)
+    {
+        return $query->whereNull('archived_at');
+    }
 
     public function employee() { return $this->belongsTo(Employee::class); }
     public function processor() { return $this->belongsTo(User::class,'processed_by'); }

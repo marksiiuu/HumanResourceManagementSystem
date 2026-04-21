@@ -42,9 +42,20 @@
                 <button type="submit" class="btn btn-primary btn-sm">Filter</button>
                 <a href="{{ route('recruitment.index') }}" class="btn btn-outline-secondary btn-sm ms-1">Reset</a>
             </div>
+            <div class="col-auto ms-auto">
+                @if($showArchived)
+                    <a href="{{ route('recruitment.index') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-briefcase me-1"></i>Show Active</a>
+                @else
+                    <a href="{{ route('recruitment.index') }}?archived=1" class="btn btn-outline-warning btn-sm"><i class="bi bi-archive me-1"></i>Archived ({{ $archivedCount }})</a>
+                @endif
+            </div>
         </form>
     </div>
 </div>
+
+@if($showArchived)
+<div class="alert alert-warning mb-3"><i class="bi bi-archive me-2"></i>Showing <strong>archived job postings</strong>. These are no longer visible to applicants.</div>
+@endif
 
 <div class="row g-3">
     @forelse($postings as $post)
@@ -92,8 +103,10 @@
     @empty
     <div class="col-12">
         <div class="card"><div class="card-body text-center text-muted py-5">
-            <i class="bi bi-briefcase display-4 d-block mb-3"></i>No job postings yet.
+            <i class="bi bi-briefcase display-4 d-block mb-3"></i>No {{ $showArchived ? 'archived' : '' }} job postings found.
+            @if(!$showArchived)
             <a href="{{ route('recruitment.create') }}" class="btn btn-primary mt-2">Create First Posting</a>
+            @endif
         </div></div>
     </div>
     @endforelse

@@ -12,18 +12,27 @@ class PayrollController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Payroll::with('employee.department');
+        $showArchived = $request->has('archived');
+        $query        = Payroll::query()->with('employee.department');
+
+        if ($showArchived) {
+            $query->whereNotNull('archived_at');
+        } else {
+            $query->active();
+        }
+
         if ($request->employee_id) $query->where('employee_id',$request->employee_id);
         if ($request->year)        $query->where('year',$request->year);
         if ($request->month)       $query->where('month',$request->month);
         if ($request->status)      $query->where('status',$request->status);
         if ($request->pay_period)  $query->where('pay_period',$request->pay_period);
 
-        $payrolls  = $query->latest()->paginate(20)->withQueryString();
-        $employees = Employee::whereNull('archived_at')->where('status','active')->get();
-        $years     = range(date('Y'), date('Y')-3);
+        $payrolls      = $query->latest()->paginate(20)->withQueryString();
+        $employees     = Employee::whereNull('archived_at')->where('status','active')->get();
+        $years         = range(date('Y'), date('Y')-3);
+        $archivedCount = Payroll::whereNotNull('archived_at')->count();
 
-        return view('payroll.index', compact('payrolls','employees','years'));
+        return view('payroll.index', compact('payrolls','employees','years', 'showArchived', 'archivedCount'));
     }
 
     public function create()
@@ -144,16 +153,16 @@ class PayrollController extends Controller
 
     public function destroy(Payroll $payroll)
     {
-        if ($payroll->status==='paid') return back()->with('error','Cannot delete a paid payroll!');
-        $payroll->delete();
-        return redirect()->route('payroll.index')->with('success','Payroll deleted!');
+        if ($payroll->status==='paid') return back()->with('error','Cannot archive a paid payroll!');
+        $payroll->update(['archived_at' => now()]);
+        return redirect()->route('payroll.index')->with('success','Payroll archived!');
     }
 
     public function myPayroll(Request $request)
     {
         $employee = auth()->user()->employee;
         if (!$employee) return redirect()->route('dashboard')->with('error','No employee profile linked.');
-        $payrolls = Payroll::where('employee_id',$employee->id)
+        $payrolls = Payroll::active()->where('employee_id',$employee->id)
             ->when($request->year, fn($q)=>$q->where('year',$request->year))
             ->latest()->paginate(12)->withQueryString();
         $years = range(date('Y'), date('Y')-3);
@@ -169,6 +178,18 @@ class PayrollController extends Controller
             'pay_period'      => 'required|in:monthly,semi_monthly',
             'pay_period_type' => 'required|in:first,second,full',
         ]);
+
+        $existingCount = Payroll::where('year', $request->year)
+            ->where('month', $request->month)
+            ->where('pay_period_type', $request->pay_period_type)
+            ->active()
+            ->count();
+
+        if ($existingCount > 0 && !$request->has('force')) {
+            return redirect()->back()
+                ->with('warning', "Payroll records already exist for this period ($existingCount records found). Do you want to generate for remaining employees?")
+                ->withInput();
+        }
 
         $employees = Employee::whereNull('archived_at')->where('status','active')->get();
         $created = 0; $skipped = 0;
@@ -212,5 +233,34 @@ class PayrollController extends Controller
             $created++;
         }
         return redirect()->route('payroll.index')->with('success',"Bulk payroll: {$created} created, {$skipped} already existed.");
+    }
+
+    public function checkBulk(Request $request)
+    {
+        $request->validate([
+            'year'            => 'required|integer',
+            'month'           => 'required|integer',
+            'pay_period_type' => 'required|string',
+        ]);
+
+        $count = Payroll::where('year', $request->year)
+            ->where('month', $request->month)
+            ->where('pay_period_type', $request->pay_period_type)
+            ->active()
+            ->count();
+
+        $processedCount = Payroll::where('year', $request->year)
+            ->where('month', $request->month)
+            ->where('pay_period_type', $request->pay_period_type)
+            ->whereIn('status', ['processed', 'paid'])
+            ->active()
+            ->count();
+
+        return response()->json([
+            'exists' => $count > 0,
+            'count' => $count,
+            'processed' => $processedCount > 0,
+            'processed_count' => $processedCount
+        ]);
     }
 }
